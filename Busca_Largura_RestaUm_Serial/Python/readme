@@ -1,0 +1,17 @@
+############################################################
+# Busca em Largura para solucionar problema do jogo RestaUm
+# Tempo exec = 6.603 s conforme time(bash_linux) - CPython2.7
+# Criado por Taylan Branco Meurer - 2016
+# Otimizado com uso de Cython:
+#
+############################################################
+
+
+CYTHON:
+
+1. primeiro criar arquivo .pyx
+2. criar arquivo setup.py
+3. compilar com: python setup.py build_ext --inplace
+4. importar o modulo criado: import nomeArquivo
+
+

@@ -1,0 +1,380 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+#include "buscaLargura.h"
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+int inicial[7][7] = {
+    {0, 0, 1, 1, 1, 0, 0},
+    {0, 0, 1, 1, 1, 0, 0},
+    {1, 1, 1, 1, 1, 1, 1},
+    {1, 1, 1, 2, 1, 1, 1},
+    {1, 1, 1, 1, 1, 1, 1},
+    {0, 0, 1, 1, 1, 0, 0},
+    {0, 0, 1, 1, 1, 0, 0}
+};
+
+int alvo[7][7] = {
+    {0, 0, 2, 2, 2, 0, 0},
+    {0, 0, 2, 2, 2, 0, 0},
+    {2, 2, 2, 2, 2, 2, 2},
+    {2, 2, 2, 1, 2, 2, 2},
+    {2, 2, 2, 2, 2, 2, 2},
+    {0, 0, 2, 2, 2, 0, 0},
+    {0, 0, 2, 2, 2, 0, 0}
+};
+
+
+/*
+ * DEFINIÇÃO DO NODO
+ * Nodo é uma estrutura composta pelo estado (matriz)
+ * um valor de distancia com relacao ao estado alvo e
+ * um ponteiro para o nodo pai.
+ * Lista encadeada
+ * Cada novo nodo é inserido no inicio
+ */
+struct nodo {
+    int valor;
+    int estado[7][7];
+    struct nodo *proximo;
+
+};
+typedef struct nodo Nodo;
+
+Nodo* inicializa_nodo(void){
+    return NULL;
+}
+
+Nodo* criar_nodo(int estado[7][7], Nodo* n, int valor){
+    Nodo* filho = (Nodo*) malloc(sizeof(Nodo));
+    int i,j;
+    for(i = 0; i < 7; i++)
+        for(j = 0; j < 7; j++)
+            filho->estado[i][j] = estado[i][j];
+
+    
+    filho->valor = valor;
+    filho->proximo = n;
+    
+    return filho;
+
+}
+/*
+ DEFINIÇÃO DA LISTA
+ * Lista é uma fila construída por meio de uma lista encadeada
+ * finalidade: armazenar os nodos
+ * O metodo de ordenacao é o selection sort
+ */
+
+
+struct lista {
+    Nodo* nodo;
+    struct lista *proximo;
+   
+};
+typedef struct lista Lista;
+
+
+Lista* inicializa_lista (void){
+    return NULL;
+}
+
+
+/*
+ Aqui ele precisa inserir no final da lista 
+ * e inserir de forma ordenada com base no retorno da 
+ * funcao valor()
+ */
+
+void insere_ordenado (Lista** lista, Nodo* no){
+    Lista *atual, *novo, *anterior;
+    int num= valor(no->estado);
+    
+    novo = (Lista *) malloc(sizeof(Lista));
+    novo->nodo = no;
+    
+    atual = *lista;
+    anterior = NULL;
+    
+    novo->nodo->valor = num;
+    
+    if(atual == NULL){
+        novo->proximo = NULL;
+        *lista = novo;
+    } else{
+        while(atual != NULL && atual->nodo->valor < num){
+            anterior = atual;
+            atual = atual->proximo;
+        }
+        
+        novo->proximo = atual;
+        
+        if(anterior == NULL){
+            *lista = novo;
+        } else{
+            anterior->proximo = novo;
+        }
+    }
+    
+}
+/*
+ retira elemento do inicio da lista
+ */
+Nodo* retira(Lista* l){
+    Nodo* retorno =  l->nodo;
+ 
+    Lista* aux = l;
+    
+    l = aux->proximo;
+    free(aux);
+    
+    return retorno;
+}
+
+int no_vazia(Lista* l){
+    if(l == NULL)
+        return 0;
+    else
+        return 1;
+}
+
+int tamanho(Lista* l){
+    Lista* p; 
+    int aux = 0;
+    for (p = l; p != NULL; p=p->proximo)
+        aux++;
+    return aux;
+}
+
+
+/*DEFINIÇÃO DE RESTA_UM
+ *
+ */
+
+int valida (Lista* I, int estado[7][7] ) {
+    Lista* k;
+    int i, j, cont = 0;
+    for (k = I; k != NULL; k = k->proximo) {
+        for (i = 0; i < 7; i++){
+            for (j = 0; j < 7; j++){
+                if (estado[i][j] == k->nodo->estado[i][j])
+                    cont++;
+            }
+        }
+        if (cont == 49)
+            return 0;
+    }
+    return 1;
+}
+
+void insereNoFinal(Nodo* nodo, Lista* I, Lista* E) {
+    int i, j;
+    for (i = 0; i < 7; i++) {
+        for (j = 0; j < 7; j++) {
+            if (nodo->estado[i][j] == 2) {
+                pulaDireita(i, j, nodo, I, E);
+                pulaEsquerda(i, j, nodo, I, E);
+                pulaDown(i, j, nodo, I, E);
+                pulaUp(i, j, nodo, I, E);
+            }
+        }
+    }
+    //estadoInicial = (int[][]) E.get(0);
+    printf("######Nova camada#######\n");
+}
+
+int pulaDireita(int origemX, int origemY, Nodo* nodo, Lista* I, Lista* E) {
+    int aux;
+    if (origemY > 1 && origemY <= 6) {
+        if (nodo->estado[origemX][origemY - 1] == 1 && nodo->estado[origemX][origemY - 2] == 1) {
+            aux = valor(nodo->estado);
+            Nodo* filho = criar_nodo(nodo->estado, nodo, aux);
+            filho->estado[origemX][origemY] = 1;
+            filho->estado[origemX][origemY - 1] = 2;
+            filho->estado[origemX][origemY - 2] = 2;
+            //imprimir(filho->estado);
+            filho->valor = valor(filho->estado);
+            if (valida(I, filho->estado) == 1 && valida(E, filho->estado) == 1) {
+                insere_ordenado(&E,filho);
+                //printf("%d\n",E->nodo->valor);
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
+
+int pulaEsquerda(int origemX, int origemY, Nodo* nodo, Lista* I, Lista* E) {
+    int aux;
+    if (origemY >= 0 && origemY < 5) {
+        if (nodo->estado[origemX][origemY + 1] == 1 && nodo->estado[origemX][origemY + 2] == 1) {
+            aux = valor(nodo->estado);
+            Nodo* filho = criar_nodo(nodo->estado, nodo, aux);
+            filho->estado[origemX][origemY] = 1;
+            filho->estado[origemX][origemY + 1] = 2;
+            filho->estado[origemX][origemY + 2] = 2;
+            //imprimir(estado);
+            filho->valor = valor(filho->estado);
+            if (valida(I, filho->estado) == 1 && valida(E, filho->estado) == 1) {
+                insere_ordenado(&E,filho);
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
+
+int pulaUp(int origemX, int origemY, Nodo* nodo, Lista* I, Lista* E) {
+    int aux;
+    if (origemY >= 0 && origemY < 5) {
+        if (nodo->estado[origemX + 1][origemY] == 1 && nodo->estado[origemX + 2][origemY] == 1) {
+            aux = valor(nodo->estado);
+            Nodo* filho = criar_nodo(nodo->estado, nodo, aux);
+            filho->estado[origemX][origemY] = 1;
+            filho->estado[origemX + 1][origemY] = 2;
+            filho->estado[origemX + 2][origemY] = 2;
+            //imprimir(estado);
+            filho->valor = valor(filho->estado);
+            if (valida(I, filho->estado) == 1 && valida(E, filho->estado) == 1) {
+                insere_ordenado(&E,filho);
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
+
+int pulaDown(int origemX, int origemY, Nodo* nodo, Lista* I, Lista* E) {
+    int aux;
+    if (origemY > 1 && origemY <= 6) {
+        if (nodo->estado[origemX - 1][origemY] == 1 && nodo->estado[origemX - 2][origemY] == 1) {
+            aux = valor(nodo->estado);
+            Nodo* filho = criar_nodo(nodo->estado, nodo, aux);
+            filho->estado[origemX][origemY] = 1;
+            filho->estado[origemX - 1][origemY] = 2;
+            filho->estado[origemX - 2][origemY] = 2;
+            //imprimir(estado);
+            filho->valor = valor(filho->estado);
+            if (valida(I, filho->estado) == 1 && valida(E, filho->estado) == 1) {
+                insere_ordenado(&E,filho);
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
+
+void imprimir(int (*estado)[7]) {
+    int i,j;
+    for (i = 0; i < 7; i++) {
+        for (j = 0; j < 7; j++) {
+            printf("%d ",estado[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+Nodo* removePrimeiro(Lista* E) {
+    return retira(E);
+    
+}
+
+void caminho(Nodo* nodo) {
+    printf("###Meta###\n\n");
+    Nodo* aux = nodo;
+    int cont = 0;
+    while (aux != NULL) {
+        printf("%d\n",cont++);
+        imprimir(aux->estado);
+        aux = aux->proximo;
+    }
+    printf("%d movimentos\n",cont-1);
+}
+
+    //heuristica distancia euclidiana
+int valor(int (*estado)[7]) { //qto maior o valor, mais distante do estado final está.
+    //A busca é efetuada pelo nodo com menor valor
+    int valor = 0;
+    int i,j;
+    for (i = 0; i < 7; i++) {
+        for (j = 0; j < 7; j++) {
+            if (estado[i][j] != alvo[i][j])
+                valor++;
+        }
+    }
+    return valor;
+}
+
+
+int main(void){
+    
+    /*
+    Nodo* nodoAtual;
+    Lista* I;
+    Lista* E;
+    
+    nodoAtual = inicializa_nodo();
+    nodoAtual = criar_nodo(inicial,nodoAtual,35);
+    
+    E = inicializa_lista();
+    I = inicializa_lista();
+    insere_ordenado(&E,nodoAtual);
+    
+    nodoAtual = criar_nodo(alvo,nodoAtual,valor(alvo));
+    insere_ordenado(&E,nodoAtual);
+    printf("Tamanho = %d\n\n", tamanho(E));
+    
+    
+    
+    Lista* i;
+    for (i = E; i != NULL; i=i->proximo) {
+        imprimir(i->nodo->estado);
+        printf("%d\n",i->nodo->valor);
+
+    }
+
+    */
+    
+    
+    Nodo* nodoAtual;
+    Lista* I = inicializa_lista();
+    Lista* E = inicializa_lista();
+
+    nodoAtual = inicializa_nodo();
+    nodoAtual = criar_nodo(inicial, nodoAtual, 33);
+    insere_ordenado(&E,nodoAtual);
+    
+    
+    int cont = 0, i, j, aux;
+    while(no_vazia(E)){
+        aux = 0;
+        printf("%d\n",cont++);
+        
+        nodoAtual = removePrimeiro(E);
+        
+        for (i = 0; i < 7; i++){
+            for (j = 0; j < 7; j++){
+                if (nodoAtual->estado[i][j] == alvo[i][j]){
+                    aux++;
+                }
+            }
+        }
+        
+        if (aux == 49){
+            caminho(nodoAtual);
+            return 1;
+        }
+       
+        insere_ordenado(&I,nodoAtual);
+        insereNoFinal(nodoAtual, I, E);
+    }
+    
+    return 0;
+
+}
+
